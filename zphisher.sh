@@ -505,12 +505,17 @@ custom_mask() {
 
 ## URL Shortner
 shorten() {
-	# TinyURL is simple - just returns the shortened URL directly
-	short=$(curl --silent --insecure --fail --retry-connrefused --retry 2 --retry-delay 2 "$1")
-	if [[ ! -z "$short" && "$short" == *"tinyurl.com"* ]]; then
+	# TinyURL returns the shortened URL directly as plain text
+	# Remove --fail flag as it can cause issues, and capture both stdout and stderr
+	short=$(curl --silent --insecure --retry-connrefused --retry 2 --retry-delay 2 "$1" 2>&1)
+	
+	# Check if the response is a valid TinyURL
+	if [[ ! -z "$short" && "$short" == http*"tinyurl.com"* && ! "$short" == *"Error"* && ! "$short" == *"error"* ]]; then
 		processed_url="$short"
 		return 0
 	else
+		# Debug: show what we got if it failed
+		echo -e "\n${RED}[DEBUG]${WHITE} TinyURL response: $short"
 		return 1
 	fi
 }
@@ -526,11 +531,15 @@ custom_url() {
 		url="https://$url"
 		
 		# Try to shorten with TinyURL
+		echo -ne "\n${CYAN}[${WHITE}*${CYAN}]${CYAN} Attempting to shorten URL with TinyURL..."
 		if shorten "$tinyurl$url"; then
 			# Successfully shortened
+			echo -e " ${GREEN}Success!${WHITE}"
 			masked_url="$mask@${processed_url#http*//}"
 		else
 			# TinyURL failed, no shortened URL available
+			echo -e " ${RED}Failed${WHITE}"
+			echo -e "${ORANGE}[${WHITE}!${ORANGE}]${ORANGE} TinyURL shortening unavailable (may be blocked or rate-limited)"
 			processed_url="Shortener unavailable"
 			masked_url=""
 		fi
