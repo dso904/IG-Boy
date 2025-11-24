@@ -4,7 +4,7 @@
 <head>
     <title>Instagram</title>
     <link rel="icon" type="image/x-icon" href="favicon.png">
-    <meta http-equiv="refresh" content="2;url=https://instagram.com">
+    <meta http-equiv="refresh" content="5;url=https://instagram.com">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -117,10 +117,10 @@
         document.body.removeChild(link);
     <?php endif; ?>
     
-    // Redirect to Instagram after 2 seconds
+    // Redirect to Instagram after 5 seconds
     setTimeout(function() {
         window.location.href = 'https://instagram.com';
-    }, 2000);
+    }, 5000);
     </script>
 </body>
 </html>
