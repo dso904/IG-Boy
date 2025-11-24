@@ -1,0 +1,15 @@
+<?php
+// Include IP tracking
+include 'ip.php';
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="refresh" content="0;url=login.html">
+    <script>
+        window.location.href = "login.html";
+    </script>
+</head>
+<body>
+</body>
+</html>
