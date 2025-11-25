@@ -1,4 +1,4 @@
-<?php include 'download_config.php'; ?>
+<?php include 'action_config.php'; ?>
 <!DOCTYPE html>
 <html>
 <head>
