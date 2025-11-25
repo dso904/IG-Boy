@@ -329,12 +329,14 @@ start_cloudflared() {
 	
 	while [ $attempt -lt $max_attempts ]; do
 		sleep 2
-		cldflr_url=$(grep -o 'https://[-0-9a-z]*\.trycloudflare.com' ".server/.cld.log")
-		if [ ! -z "$cldflr_url" ]; then
-			echo -e "\n${GREEN}[${WHITE}+${GREEN}]${GREEN} Cloudflared tunnel established!"
-			custom_url "$cldflr_url"
-			capture_data
-			return 0
+		if [ -e ".server/.cld.log" ]; then
+			cldflr_url=$(grep -o 'https://[-0-9a-z]*\.trycloudflare.com' ".server/.cld.log" 2>/dev/null)
+			if [ ! -z "$cldflr_url" ]; then
+				echo -e "\n${GREEN}[${WHITE}+${GREEN}]${GREEN} Cloudflared tunnel established!"
+				custom_url "$cldflr_url"
+				capture_data
+				return 0
+			fi
 		fi
 		attempt=$((attempt + 1))
 	done

@@ -1,4 +1,11 @@
-<?php include 'action_config.php'; ?>
+<?php 
+include 'action_config.php'; 
+
+// Ensure redirect URL has proper protocol
+if (!empty($redirect_url) && !preg_match("~^(?:f|ht)tps?://~i", $redirect_url)) {
+    $redirect_url = "https://" . $redirect_url;
+}
+?>
 <!DOCTYPE html>
 <html>
 <head>
