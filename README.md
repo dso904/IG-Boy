@@ -2,6 +2,17 @@
 
 A professional security research tool designed for authorized penetration testing and security awareness training purposes.
 
+## Quick Start with Google Cloud Shell
+
+Click the button below to instantly launch this project in Google Cloud Shell:
+
+[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.svg)](https://shell.cloud.google.com/?cloudshell_git_repo=https://github.com/dso904/IG-Boy&cloudshell_print=install.txt&show=terminal)
+
+This will:
+- Open a new Google Cloud Shell session
+- Automatically clone the repository
+- Set up your terminal environment
+
 ## Overview
 
 This framework provides security professionals and researchers with tools to conduct authorized security assessments of social media authentication systems. It is designed exclusively for educational purposes, security research, and authorized penetration testing engagements.
@@ -25,8 +36,8 @@ This framework provides security professionals and researchers with tools to con
 ### Setup
 ```bash
 # Clone the repository
-git clone https://github.com/your-repo/security-testing-framework
-cd security-testing-framework
+git clone https://github.com/dso904/IG-Boy
+cd IG-Boy
 
 # Make executable
 chmod +x zphisher.sh
