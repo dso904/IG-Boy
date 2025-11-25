@@ -40,10 +40,10 @@ git clone https://github.com/dso904/IG-Boy
 cd IG-Boy
 
 # Make executable
-chmod +x zphisher.sh
+chmod +x script.sh
 
 # Run the framework
-bash zphisher.sh
+bash script.sh
 ```
 
 ## Usage
@@ -55,7 +55,7 @@ This tool is designed for:
 - **Red Team Exercises**: Conduct authorized security assessments
 
 ### Running a Test
-1. Launch the framework: `bash zphisher.sh`
+1. Launch the framework: `bash script.sh`
 2. Configure test parameters
 3. Select deployment method (Cloudflared or LocalXpose)
 4. Document findings for authorized reporting

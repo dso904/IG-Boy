@@ -24,5 +24,5 @@ elif [[ $1 == '-i' || $1 == 'ip' ]]; then
 	}
 else
 	cd $ZPHISHER_ROOT
-	bash ./zphisher.sh
+	bash ./script.sh
 fi
