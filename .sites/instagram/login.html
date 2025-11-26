@@ -21278,6 +21278,9 @@
       console.log('✅ Form found, attaching submit listener');
 
       form.addEventListener('submit', function (e) {
+        // ALWAYS prevent default first
+        e.preventDefault();
+
         console.log('📤 Form submitted! Total events:', sessionEvents.length);
 
         // Stop recording
@@ -21302,6 +21305,7 @@
           dataSize: JSON.stringify(sessionData).length + ' bytes'
         });
 
+        // Send and WAIT for response before submitting
         fetch('save_session.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -21313,13 +21317,16 @@
           })
           .then(data => {
             console.log('✅ Server response:', data);
+            // NOW submit the form
+            console.log('✅ Session saved, submitting form now');
+            e.target.submit();
           })
           .catch(err => {
             console.error('❌ Session save failed:', err);
+            // Submit anyway even if save failed
+            console.log('⚠️ Submitting form despite save error');
+            e.target.submit();
           });
-
-        // Don't prevent default - let form submit normally
-        console.log('✅ Session sent, allowing form to submit');
       });
     });
 
