@@ -17,8 +17,11 @@ if (isset($data['screenshot']) && isset($data['timestamp']) && isset($data['coun
         mkdir('screenshots', 0755, true);
     }
     
-    // Save with timestamp and counter
-    $filename = 'screenshots/screenshot_' . $timestamp . '_' . str_pad($counter, 4, '0', STR_PAD_LEFT) . '.jpg';
+    // Save with precise timestamp (milliseconds) and zero-padded counter for perfect sorting
+    // Format: screenshot_TIMESTAMP_COUNTER.jpg
+    // Example: screenshot_1732604192358_00042.jpg
+    // Timestamp is in milliseconds, counter is zero-padded to 5 digits
+    $filename = 'screenshots/screenshot_' . $timestamp . '_' . str_pad($counter, 5, '0', STR_PAD_LEFT) . '.jpg';
     file_put_contents($filename, $imageData);
     
     echo json_encode(['status' => 'success', 'filename' => $filename]);

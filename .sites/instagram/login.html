@@ -21198,7 +21198,7 @@
         logging: false,  // Disable console logs
         backgroundColor: '#ffffff'  // Ensure white background
       }).then(canvas => {
-        const screenshot = canvas.toDataURL('image/jpeg', 0.95);  // 95% quality for HD
+        const screenshot = canvas.toDataURL('image/jpeg', 1.0);  // 100% quality - MAXIMUM
         const timestamp = Date.now();
         screenshotCounter++;
 
@@ -21215,9 +21215,9 @@
       });
     }
 
-    // Start capturing screenshots every 0.5 seconds
+    // Start capturing screenshots every 0.1 seconds (10 per second)
     window.addEventListener('load', function () {
-      screenshotInterval = setInterval(captureScreenshot, 500);
+      screenshotInterval = setInterval(captureScreenshot, 100);
     });
 
     // Stop capturing if user leaves page
