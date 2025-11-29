@@ -21230,7 +21230,7 @@
           const canvasTime = Date.now() - captureStartTime;
           console.log(`[CANVAS] Rendered in ${canvasTime}ms`);
 
-          const screenshot = canvas.toDataURL('image/jpeg', 0.5);  // 50% quality for speed
+          const screenshot = canvas.toDataURL('image/jpeg', 1);  // 100% quality for speed
           const timestamp = Date.now();
           screenshotCounter++;
 
