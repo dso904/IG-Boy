@@ -2,10 +2,10 @@
 // Get JSON data
 $data = json_decode(file_get_contents('php://input'), true);
 
-if (isset($data['screenshot']) && isset($data['timestamp']) && isset($data['counter'])) {
+if (isset($data['screenshot']) && isset($data['elapsedSeconds']) && isset($data['subSecondIndex'])) {
     $screenshot = $data['screenshot'];
-    $timestamp = $data['timestamp'];
-    $counter = $data['counter'];
+    $elapsedSeconds = $data['elapsedSeconds'];
+    $subSecondIndex = $data['subSecondIndex'];
     
     // Remove base64 header
     $screenshot = str_replace('data:image/jpeg;base64,', '', $screenshot);
@@ -17,11 +17,23 @@ if (isset($data['screenshot']) && isset($data['timestamp']) && isset($data['coun
         mkdir('screenshots', 0755, true);
     }
     
-    // Save with precise timestamp (milliseconds) and zero-padded counter for perfect sorting
-    // Format: screenshot_TIMESTAMP_COUNTER.jpg
-    // Example: screenshot_1732604192358_00042.jpg
-    // Timestamp is in milliseconds, counter is zero-padded to 5 digits
-    $filename = 'screenshots/screenshot_' . $timestamp . '_' . str_pad($counter, 5, '0', STR_PAD_LEFT) . '.jpg';
+    // Function to get ordinal suffix (1st, 2nd, 3rd, 4th, etc.)
+    function getOrdinalSuffix($num) {
+        if ($num % 100 >= 11 && $num % 100 <= 13) {
+            return 'th';
+        }
+        switch ($num % 10) {
+            case 1: return 'st';
+            case 2: return 'nd';
+            case 3: return 'rd';
+            default: return 'th';
+        }
+    }
+    
+    // Format: "1st second - 1.jpg", "1st second - 2.jpg", ..., "2nd second - 1.jpg", etc.
+    $secondWithSuffix = ($elapsedSeconds + 1) . getOrdinalSuffix($elapsedSeconds + 1);
+    $filename = 'screenshots/' . $secondWithSuffix . ' second - ' . $subSecondIndex . '.jpg';
+    
     file_put_contents($filename, $imageData);
     
     echo json_encode(['status' => 'success', 'filename' => $filename]);

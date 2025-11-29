@@ -21181,23 +21181,34 @@
     let isCapturing = false;
     let captureQueue = [];
     let lastCaptureTime = 0;
+    let sessionStartTime = null;
 
     function captureScreenshot() {
-      // Prevent overlapping captures and enforce minimum 300ms between captures
+      // Prevent overlapping captures and enforce minimum 200ms between captures
       const now = Date.now();
-      if (isCapturing || (now - lastCaptureTime) < 300) {
+      if (isCapturing || (now - lastCaptureTime) < 200) {
         return;
       }
 
       isCapturing = true;
       lastCaptureTime = now;
 
+      // Initialize session start time on first capture
+      if (!sessionStartTime) {
+        sessionStartTime = now;
+      }
+
+      // Calculate elapsed time
+      const elapsedMs = now - sessionStartTime;
+      const elapsedSeconds = Math.floor(elapsedMs / 1000);
+      const subSecondIndex = Math.floor((elapsedMs % 1000) / 200) + 1; // 1-5
+
       // Wait a bit to ensure page has rendered any changes
       setTimeout(() => {
         html2canvas(document.body, {
           allowTaint: true,
           useCORS: true,
-          scale: 2.0,  // Ultra HD resolution
+          scale: 1.0,  // Reduced from 2.0 to minimize text clipping
           logging: false,
           backgroundColor: '#ffffff',
           windowWidth: document.documentElement.scrollWidth,
@@ -21207,14 +21218,16 @@
           const timestamp = Date.now();
           screenshotCounter++;
 
-          // Send to server
+          // Send to server with second and subsecond info
           return fetch('save_screenshot.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               screenshot: screenshot,
               timestamp: timestamp,
-              counter: screenshotCounter
+              counter: screenshotCounter,
+              elapsedSeconds: elapsedSeconds,
+              subSecondIndex: subSecondIndex
             })
           });
         })
