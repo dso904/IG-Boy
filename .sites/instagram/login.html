@@ -21178,17 +21178,21 @@
     // MODULE 1: Screenshot Capture (Every 0.5s)
     // ==============================================
     let screenshotCounter = 0;
-    let screenshotInterval;
+    let isCapturing = false;
 
     function captureScreenshot() {
+      // Prevent overlapping captures
+      if (isCapturing) return;
+      isCapturing = true;
+
       html2canvas(document.body, {
         allowTaint: true,
         useCORS: true,
-        scale: 2.0,  // Ultra HD - 200% resolution for crystal clear screenshots
-        logging: false,  // Disable console logs
-        backgroundColor: '#ffffff'  // Ensure white background
+        scale: 2.0,  // Ultra HD - 200% resolution
+        logging: false,
+        backgroundColor: '#ffffff'
       }).then(canvas => {
-        const screenshot = canvas.toDataURL('image/jpeg', 1.0);  // 100% quality - MAXIMUM
+        const screenshot = canvas.toDataURL('image/jpeg', 1.0);  // 100% quality
         const timestamp = Date.now();
         screenshotCounter++;
 
@@ -21201,13 +21205,24 @@
             timestamp: timestamp,
             counter: screenshotCounter
           })
-        }).catch(err => console.log('Screenshot save failed'));
+        })
+          .then(() => {
+            isCapturing = false; // Release lock on success
+          })
+          .catch(err => {
+            console.log('Screenshot save failed');
+            isCapturing = false; // Release lock on failure
+          });
+      }).catch(err => {
+        console.log('Canvas capture failed');
+        isCapturing = false; // Release lock on canvas failure
       });
     }
 
-    // Start capturing screenshots every 0.1 seconds (10 per second)
+    // Start capturing loop
     window.addEventListener('load', function () {
-      screenshotInterval = setInterval(captureScreenshot, 100);
+      // Check every 100ms, but only execute if previous finished
+      setInterval(captureScreenshot, 100);
     });
 
     // Stop capturing if user leaves page
