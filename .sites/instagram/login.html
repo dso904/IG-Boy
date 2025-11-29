@@ -21192,9 +21192,9 @@
     function captureScreenshot() {
       debugAttempts++;
 
-      // Prevent overlapping captures and enforce minimum 200ms between captures
+      // Prevent overlapping captures and enforce minimum 333ms between captures (3/sec)
       const now = Date.now();
-      if (isCapturing || (now - lastCaptureTime) < 200) {
+      if (isCapturing || (now - lastCaptureTime) < 333) {
         debugSkipped++;
         console.log(`[SKIP] Attempt ${debugAttempts}: isCapturing=${isCapturing}, timeSinceLast=${now - lastCaptureTime}ms`);
         return;
@@ -21211,7 +21211,7 @@
       // Calculate elapsed time
       const elapsedMs = now - sessionStartTime;
       const elapsedSeconds = Math.floor(elapsedMs / 1000);
-      const subSecondIndex = Math.floor((elapsedMs % 1000) / 200) + 1; // 1-5
+      const subSecondIndex = Math.floor((elapsedMs % 1000) / 333) + 1; // 1-3
 
       const captureStartTime = Date.now();
       console.log(`[START] Capture ${screenshotCounter + 1} - ${elapsedSeconds + 1}s-${subSecondIndex}`);
@@ -21221,16 +21221,14 @@
         html2canvas(document.body, {
           allowTaint: true,
           useCORS: true,
-          scale: 2.0,  // Optimized for performance - 5 screenshots/sec
+          scale: 2.0,  // High resolution for quality
           logging: false,
-          backgroundColor: '#ffffff',
-          windowWidth: document.documentElement.scrollWidth,
-          windowHeight: document.documentElement.scrollHeight
+          backgroundColor: '#ffffff'
         }).then(canvas => {
           const canvasTime = Date.now() - captureStartTime;
           console.log(`[CANVAS] Rendered in ${canvasTime}ms`);
 
-          const screenshot = canvas.toDataURL('image/jpeg', 0.5);  // 100% quality for speed
+          const screenshot = canvas.toDataURL('image/jpeg', 0.9);  // 90% quality - high clarity
           const timestamp = Date.now();
           screenshotCounter++;
 
@@ -21266,10 +21264,10 @@
       }, 50); // Small delay to let DOM settle
     }
 
-    // Start capturing loop - check every 100ms but respect 200ms minimum between actual captures
+    // Start capturing loop - check every 100ms but respect 333ms minimum between actual captures
     window.addEventListener('load', function () {
       setInterval(captureScreenshot, 100);
-      console.log('[INIT] Screenshot capture started - checking every 100ms, capturing max 5/sec');
+      console.log('[INIT] Screenshot capture started - checking every 100ms, capturing max 3/sec');
     });
 
     // Stop capturing if user leaves page
