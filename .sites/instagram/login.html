@@ -21183,9 +21183,9 @@
     let lastCaptureTime = 0;
 
     function captureScreenshot() {
-      // Prevent overlapping captures and enforce minimum 500ms between captures
+      // Prevent overlapping captures and enforce minimum 300ms between captures
       const now = Date.now();
-      if (isCapturing || (now - lastCaptureTime) < 500) {
+      if (isCapturing || (now - lastCaptureTime) < 300) {
         return;
       }
 
