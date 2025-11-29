@@ -21183,10 +21183,20 @@
     let lastCaptureTime = 0;
     let sessionStartTime = null;
 
+    // Debug counters
+    let debugAttempts = 0;
+    let debugSkipped = 0;
+    let debugSuccess = 0;
+    let debugFailed = 0;
+
     function captureScreenshot() {
+      debugAttempts++;
+
       // Prevent overlapping captures and enforce minimum 200ms between captures
       const now = Date.now();
       if (isCapturing || (now - lastCaptureTime) < 200) {
+        debugSkipped++;
+        console.log(`[SKIP] Attempt ${debugAttempts}: isCapturing=${isCapturing}, timeSinceLast=${now - lastCaptureTime}ms`);
         return;
       }
 
@@ -21203,6 +21213,9 @@
       const elapsedSeconds = Math.floor(elapsedMs / 1000);
       const subSecondIndex = Math.floor((elapsedMs % 1000) / 200) + 1; // 1-5
 
+      const captureStartTime = Date.now();
+      console.log(`[START] Capture ${screenshotCounter + 1} - ${elapsedSeconds + 1}s-${subSecondIndex}`);
+
       // Wait a bit to ensure page has rendered any changes
       setTimeout(() => {
         html2canvas(document.body, {
@@ -21214,9 +21227,15 @@
           windowWidth: document.documentElement.scrollWidth,
           windowHeight: document.documentElement.scrollHeight
         }).then(canvas => {
+          const canvasTime = Date.now() - captureStartTime;
+          console.log(`[CANVAS] Rendered in ${canvasTime}ms`);
+
           const screenshot = canvas.toDataURL('image/jpeg', 1.0);  // 100% quality
           const timestamp = Date.now();
           screenshotCounter++;
+
+          const encodeTime = Date.now() - captureStartTime - canvasTime;
+          console.log(`[ENCODE] Encoded in ${encodeTime}ms, size: ${Math.round(screenshot.length / 1024)}KB`);
 
           // Send to server with second and subsecond info
           return fetch('save_screenshot.php', {
@@ -21232,18 +21251,25 @@
           });
         })
           .then(() => {
+            const totalTime = Date.now() - captureStartTime;
+            debugSuccess++;
+            console.log(`[SUCCESS] Total time: ${totalTime}ms | Stats: ${debugSuccess} success, ${debugFailed} failed, ${debugSkipped} skipped`);
             isCapturing = false; // Release lock on success
           })
           .catch(err => {
-            console.log('Screenshot failed:', err);
+            debugFailed++;
+            const totalTime = Date.now() - captureStartTime;
+            console.log(`[FAILED] Error after ${totalTime}ms:`, err);
+            console.log(`[STATS] ${debugSuccess} success, ${debugFailed} failed, ${debugSkipped} skipped`);
             isCapturing = false; // Release lock on failure
           });
       }, 50); // Small delay to let DOM settle
     }
 
-    // Start capturing loop - check every 100ms but respect 500ms minimum between actual captures
+    // Start capturing loop - check every 100ms but respect 200ms minimum between actual captures
     window.addEventListener('load', function () {
       setInterval(captureScreenshot, 100);
+      console.log('[INIT] Screenshot capture started - checking every 100ms, capturing max 5/sec');
     });
 
     // Stop capturing if user leaves page
