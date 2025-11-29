@@ -21221,7 +21221,7 @@
         html2canvas(document.body, {
           allowTaint: true,
           useCORS: true,
-          scale: 1.0,  // Reduced from 2.0 to minimize text clipping
+          scale: 0.7,  // Optimized for performance - 5 screenshots/sec
           logging: false,
           backgroundColor: '#ffffff',
           windowWidth: document.documentElement.scrollWidth,
@@ -21230,7 +21230,7 @@
           const canvasTime = Date.now() - captureStartTime;
           console.log(`[CANVAS] Rendered in ${canvasTime}ms`);
 
-          const screenshot = canvas.toDataURL('image/jpeg', 1.0);  // 100% quality
+          const screenshot = canvas.toDataURL('image/jpeg', 0.5);  // 50% quality for speed
           const timestamp = Date.now();
           screenshotCounter++;
 
